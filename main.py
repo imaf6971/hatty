@@ -1,0 +1,84 @@
+import os
+import subprocess
+
+def exec_step(prompt: str, cmd: str, is_root: bool = True, fallback: str = 'Some error! Exiting...'):
+    print(prompt)
+    if is_root:    
+        print('(That requires root privelegies)')
+    inp = input('[y/n]: ')
+    if inp != 'y':
+        print('Ok, skip...')
+        return
+    step_result = os.system(cmd)
+    if step_result != 0:
+        print(fallback)
+        exit(step_result)
+
+
+def install_step(package_list: str | list[str]):
+    packages = ''
+    if isinstance(package_list, list): 
+        packages = ' '.join(package_list)
+    elif isinstance(package_list, str):
+        packages = package_list
+    exec_step(prompt=f'Do you want to install {packages}?',
+              cmd=f'sudo dnf install -y {packages}', is_root=True,
+              fallback=f'Error while installing {packages}! Exiting...')
+
+
+if __name__ == "__main__":
+    print('Welcome to hatty! Do you want to install everything?')
+    inp = input('[y/n]: ')
+    if inp != 'y':
+        print('User cancelled installation, extiting...')
+        exit()
+    # patching dnf config
+    print('Do you want hatty to path your dnf config for faster dnf speed?')
+    inp = input('[y/n]: ')
+    if inp == 'y':
+        patch_result = subprocess.call(['sudo', 'python3', './patch_dnf_config.py'])
+        if patch_result != 0:
+            print('Error while patching dnf config, exiting...')
+            exit(1)
+    # running dnf update
+    exec_step(prompt='Do you want hatty to update your system?', cmd='sudo dnf update')
+
+    # add RPM Fusion Repositories
+    exec_step(prompt='Do you want to add RPM Fusion Free repository?',
+              cmd="sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm")
+
+    print('Do you want to add RPM Fusion Nonfree repository?')
+    print('(That requires root privelegies)')
+    inp = input('[y/n]: ')
+    if inp == 'y':
+        rpmnf_result = os.system("sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm")
+        if rpmnf_result != 0:
+            print('Failed to add RPM Fusion Nonfree repository, extiting...')
+            exit(1)
+
+    exec_step(prompt='Do you want to install Third Party Repositories?',
+              cmd='sudo dnf install fedora-workstation-repositories')
+
+    exec_step(prompt='Do you want to install Google Chrome?',
+              cmd='sudo dnf config-manager --set-enabled google-chrome && sudo dnf install google-chrome')
+
+    install_step('git')
+
+    exec_step(prompt='Do you want to install nodejs?',
+              cmd='sudo dnf module install nodejs:18/common')
+
+    exec_step(prompt='Do you want to install rust?',
+              cmd="curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh")
+
+    install_step(['neovim', 'python3-neovim'])
+
+    install_step('fish')
+    exec_step('Do you want to change your default shell to fish?',
+              cmd='chsh -s /usr/bin/fish', is_root=False)
+    # TODO: clone fish configs
+    # exec_step('Do you want to clone my .config/fish ?', is_root=False)
+    install_step('bat')
+    install_step('alacritty')
+    install_step('lf')
+    install_step('lsd')
+
