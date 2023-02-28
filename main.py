@@ -1,18 +1,43 @@
 import os
 import subprocess
 
-def exec_step(prompt: str, cmd: str, is_root: bool = True, fallback: str = 'Some error! Exiting...'):
-    print(prompt)
-    if is_root:    
-        print('(That requires root privelegies)')
-    inp = input('[y/n]: ')
-    if inp != 'y':
-        print('Ok, skip...')
-        return
-    step_result = os.system(cmd)
-    if step_result != 0:
+
+def yes_or_no() -> bool:
+    """Asks user for yes or no
+    Returns True if 'y' and False otherwise"""
+    return input('[y/n]: ') == 'y'
+
+
+def exec_cmd(cmd: str, fallback: str):
+    return_code = os.system(cmd)
+    if return_code != 0:
         print(fallback)
-        exit(step_result)
+        exit(return_code)
+
+
+def ask_for_step(prompt: str, is_root: bool):
+    print(prompt)
+    if is_root:
+        print('(That requires root privelegies)')
+    ans = yes_or_no()
+    if ans == False:
+        print('Ok, skipping...')
+    return ans
+
+
+def exec_batch(prompt: str, cmds: list[str], is_root = True, fallback: str = 'Some error! Exiting...'):
+    ans = ask_for_step(prompt, is_root)
+    if ans == False:
+        return
+    for cmd in cmds:
+        exec_cmd(cmd, fallback)
+
+
+def exec_step(prompt: str, cmd: str, is_root: bool = True, fallback: str = 'Some error! Exiting...'):
+    ans = ask_for_step(prompt, is_root)
+    if ans == False:
+        return
+    exec_cmd(cmd, fallback)
 
 
 def install_step(package_list: str | list[str]):
@@ -46,16 +71,8 @@ if __name__ == "__main__":
     # add RPM Fusion Repositories
     exec_step(prompt='Do you want to add RPM Fusion Free repository?',
               cmd="sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm")
-
-    print('Do you want to add RPM Fusion Nonfree repository?')
-    print('(That requires root privelegies)')
-    inp = input('[y/n]: ')
-    if inp == 'y':
-        rpmnf_result = os.system("sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm")
-        if rpmnf_result != 0:
-            print('Failed to add RPM Fusion Nonfree repository, extiting...')
-            exit(1)
-
+    exec_step('Do you want to add RPM Fusion Nonfree repository?',
+              cmd="sudo dnf install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm")
     exec_step(prompt='Do you want to install Third Party Repositories?',
               cmd='sudo dnf install fedora-workstation-repositories')
 
@@ -82,3 +99,8 @@ if __name__ == "__main__":
     install_step('lf')
     install_step('lsd')
 
+    exec_batch('Do you want to install Visual Studio Code?', [
+        'sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc',
+        'sudo sh -c \'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo\'',
+        'dnf check-update',
+        'sudo dnf install -y code',])
