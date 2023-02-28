@@ -87,6 +87,7 @@ if __name__ == "__main__":
     exec_step(prompt='Do you want to install rust?',
               cmd="curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh")
 
+    install_step('alacritty')
     install_step(['neovim', 'python3-neovim'])
 
     install_step('fish')
@@ -95,7 +96,6 @@ if __name__ == "__main__":
     # TODO: clone fish configs
     # exec_step('Do you want to clone my .config/fish ?', is_root=False)
     install_step('bat')
-    install_step('alacritty')
     install_step('lf')
     install_step('lsd')
 
