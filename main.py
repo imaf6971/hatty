@@ -89,6 +89,8 @@ if __name__ == "__main__":
 
     install_step('alacritty')
     install_step(['neovim', 'python3-neovim'])
+    exec_step('Do you want to install IDE-like config for neovim?',
+              'git clone https://github.com/imaf6971/nvim-config.git ~/.config/nvim', is_root=False)
 
     install_step('fish')
     exec_step('Do you want to change your default shell to fish?',
@@ -104,3 +106,5 @@ if __name__ == "__main__":
         'sudo sh -c \'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo\'',
         'dnf check-update',
         'sudo dnf install -y code',])
+
+    
