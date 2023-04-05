@@ -20,29 +20,31 @@ def ask_for_step(prompt: str, is_root: bool):
     if is_root:
         print('(That requires root privelegies)')
     ans = yes_or_no()
-    if ans == False:
+    if ans is False:
         print('Ok, skipping...')
     return ans
 
 
-def exec_batch(prompt: str, cmds: list[str], is_root = True, fallback: str = 'Some error! Exiting...'):
+def exec_batch(prompt: str, cmds: list[str], is_root=True,
+               fallback: str = 'Some error! Exiting...'):
     ans = ask_for_step(prompt, is_root)
-    if ans == False:
+    if ans is False:
         return
     for cmd in cmds:
         exec_cmd(cmd, fallback)
 
 
-def exec_step(prompt: str, cmd: str, is_root: bool = True, fallback: str = 'Some error! Exiting...'):
+def exec_step(prompt: str, cmd: str, is_root: bool = True,
+              fallback: str = 'Some error! Exiting...'):
     ans = ask_for_step(prompt, is_root)
-    if ans == False:
+    if ans is False:
         return
     exec_cmd(cmd, fallback)
 
 
 def install_step(package_list: str | list[str]):
     packages = ''
-    if isinstance(package_list, list): 
+    if isinstance(package_list, list):
         packages = ' '.join(package_list)
     elif isinstance(package_list, str):
         packages = package_list
@@ -61,12 +63,14 @@ if __name__ == "__main__":
     print('Do you want hatty to path your dnf config for faster dnf speed?')
     inp = input('[y/n]: ')
     if inp == 'y':
-        patch_result = subprocess.call(['sudo', 'python3', './patch_dnf_config.py'])
+        patch_result = subprocess.call(
+                ['sudo', 'python3', './patch_dnf_config.py'])
         if patch_result != 0:
             print('Error while patching dnf config, exiting...')
             exit(1)
     # running dnf update
-    exec_step(prompt='Do you want hatty to update your system?', cmd='sudo dnf update')
+    exec_step(prompt='Do you want hatty to update your system?',
+              cmd='sudo dnf update')
 
     # add RPM Fusion Repositories
     exec_step(prompt='Do you want to add RPM Fusion Free repository?',
@@ -90,7 +94,8 @@ if __name__ == "__main__":
     install_step('alacritty')
     install_step(['neovim', 'python3-neovim'])
     exec_step('Do you want to install IDE-like config for neovim?',
-              'git clone https://github.com/imaf6971/nvim-config.git ~/.config/nvim', is_root=False)
+              'git clone https://github.com/imaf6971/nvim-config.git ~/.config/nvim',
+              is_root=False)
 
     install_step('fish')
     exec_step('Do you want to change your default shell to fish?',
